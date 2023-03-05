@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title> test </title>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<script type="text/javascript" src="jquery-3.6.3.min.js"> </script>
+	<style>
+	/* Drix */
+	* {
+		box-sizing: border-box;
+		font-family:Arial;
+	}
+	body {
+		display:flex;
+		flex-direction:column;
+	}
+	
+	#deviceScan {
+		width: 400px;
+		margin: 0 auto;
+		border: 1px dotted red;
+		padding: 25px;
+	}
+	#videoCapture {
+		width: 410px;
+		margin: 0 auto;
+		padding: 5px;
+	}
+	#snap {
+		width:100%;
+	}
+	
+	</style>
+</head>
+<body>
+<div id="deviceScan">
+	<div class="status"></div>
+	
+	<div style="clear:both"> </div>
+</div>
+<div id="videoCapture">
+	<video id="video" width="400" height="400" autoplay="true" muted> </video>
+	<button id="snap"> Take photo </button> 
+	
+	<canvas id="canvas" width="400" height="400" > </canvas>
+</div>
+	<script type="text/javascript"> 
+		/** camera enable and canvas preparation **/
+		let canvas = document.querySelector("#canvas");
+		let context = canvas.getContext("2d");
+		let video = document.querySelector("#video");
+		
+		
+		// enumerate devices
+		$('.status').html("Camera device initializing...");
+		
+		if (!navigator.mediaDevices?.enumerateDevices) {
+		  console.log("enumerateDevices() not supported.");
+		} else {
+		  // List cameras and microphones.
+		  var arrDeviceID = [];
+		  navigator.mediaDevices
+			.enumerateDevices()
+			.then((devices) => {
+			  devices.forEach((device) => {
+					console.log(`${device.kind}: ${device.label} id = ${device.deviceId}`);
+										
+					if(device.kind=='videoinput') {
+						$("#selectCamDevice").append( '<option value="'+device.deviceId+'">'+device.label+'</option>' );
+						arrDeviceID.push( device.deviceId );
+					}
+			  });
+				//selecting the last video device camera which is back camera
+				 console.log(arrDeviceID);
+				 arrDeviceID.sort();
+				 arrDeviceID.reverse();
+			  
+				 var constraints = { deviceId: { exact: arrDeviceID[0]  } };
+				
+					if ( navigator.mediaDevices && navigator.mediaDevices.getUserMedia )  {
+						navigator.mediaDevices.getUserMedia({video : constraints }).then((stream) => {
+							video.srcObject = stream;
+							video.play();
+							$('.status').html("Camera device ready."); 
+						});
+					}
+				
+				
+
+			})
+			.catch((err) => {
+			  console.error(`${err.name}: ${err.message}`);
+			});
+
+		}
+		
+
+		/** end select event **/
+		
+		
+		
+		/** camera capture convert to canvas **/
+		$("#snap").click( function() {
+			context.drawImage(video, 0, 0, 640,480);
+			
+			$("#videoCapture").append("<button id='saveImg'> Save Image </button>");
+			
+		});
+		
+		$("#videoCapture").on("click","#saveImg", function() {
+		
+			// Save image as a data URL
+		
+			//var canvas = document.getElementById("alpha");
+				var dataURL = canvas.toDataURL("image/png");
+				//var newTab = window.open('about:blank','image from canvas');
+				//newTab.document.write("<img src='" + dataURL + "' alt='from canvas'/>");
+			
+			//second option
+				let downloadLink = document.createElement('a');
+		
+				downloadLink.setAttribute('download', 'CanvasAsImage.png');
+				downloadLink.setAttribute('href', dataURL);
+				downloadLink.click();
+			
+		});
+		
+		
+		
+
+	
+	</script>
+	
+	
+</body>
+</html>
